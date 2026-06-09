@@ -42,7 +42,12 @@
 - Стили кнопок — инлайн / высокая специфичность (базовый CSS GetCourse перебивает классы).
 
 ## Даты (вебинары/старты)
-- `data-gc-date="2026-..-..T..:.." data-gc-tz="Europe/Moscow"` + inline-скрипт локализации. Не хардкодить «через N дней».
+- Локализатор дат — общий файл репо: `_shared/gc-date-localizer.js`
+  (raw: `https://raw.githubusercontent.com/kadyninconstantin-lab/brand-systems/main/_shared/gc-date-localizer.js`).
+- Содержимое скрипта вшивай **inline** в `<script>` в конце `<body>` (внешние `<script src>` GetCourse режет).
+- Элементы дат помечай: `data-gc-date="2026-06-17T19:00" data-gc-tz="Europe/Moscow" data-gc-format="full"`.
+  Форматы: `datetime` (деф.) · `time` · `date` · `relative` · `full`; поддерживается `daily`.
+- Не хардкодь «через N дней» / время — считается от `data-gc-date` на стороне пользователя.
 
 ## Существующие лендинги
 - **Вебинар «7 зон мозга»** — slug `webinar-7-zon-mozga` (page_id `4601492`).
