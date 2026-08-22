@@ -1,5 +1,5 @@
 /**
- * gc-date-localizer — v1.2.0
+ * gc-date-localizer — v1.3.0
  * Localizes event dates on GetCourse landing pages.
  *
  * Usage (fixed date):
@@ -12,7 +12,12 @@
  *   <span data-gc-date="daily" data-gc-time="11:00" data-gc-tz="Europe/Berlin"
  *         data-gc-restart="09:00" data-gc-format="relative"></span>
  *
- * Formats: datetime (default) | time | date | relative | full
+ * Usage (автовебинар «у всех 20:00 по местному» — час задан в таймзоне ПОСЕТИТЕЛЯ):
+ *   <span data-gc-date="daily" data-gc-time="20:00" data-gc-tz="local" data-gc-format="relative"></span>
+ *   <span data-gc-date="daily" data-gc-time="20:00" data-gc-tz="local" data-gc-format="zone"></span>
+ *
+ * data-gc-tz: IANA-зона источника | "local" (= таймзона посетителя). По умолчанию UTC.
+ * Formats: datetime (default) | time | date | relative | full | city | zone
  */
 (function () {
 
@@ -27,7 +32,13 @@
   var SELECTOR    = '[' + ATTR_DATE + ']:not([' + ATTR_DONE + '])';
 
   // ── Locale ────────────────────────────────────────────────────────────────
-  var isRu   = (navigator.language || '').toLowerCase().indexOf('ru') === 0;
+  // По умолчанию — язык браузера. Страница может форсировать язык подписей
+  // (window.GC_DATE_LANG='ru' перед подключением скрипта): у русскоязычного
+  // посетителя за границей navigator.language часто en, а лендинг русский.
+  var forcedLang = (window.GC_DATE_LANG || '').toLowerCase();
+  var isRu   = forcedLang
+                 ? forcedLang.indexOf('ru') === 0
+                 : (navigator.language || '').toLowerCase().indexOf('ru') === 0;
   var locale = isRu ? 'ru-RU' : 'en-US';
 
   var labels = {
@@ -39,15 +50,75 @@
   // ── Known city short names (for datetime/full formats) ────────────────────
   // Intl.DateTimeFormat 'long' names are verbose — use a curated map instead.
   var CITY_MAP = {
+    // Россия — все 11 зон (UTC+2…+12)
+    'Europe/Kaliningrad':     isRu ? 'Калининград'   : 'Kaliningrad',
     'Europe/Moscow':          isRu ? 'Москва'        : 'Moscow',
+    'Europe/Simferopol':      isRu ? 'Симферополь'   : 'Simferopol',
+    'Europe/Kirov':           isRu ? 'Киров'         : 'Kirov',
+    'Europe/Volgograd':       isRu ? 'Волгоград'     : 'Volgograd',
+    'Europe/Astrakhan':       isRu ? 'Астрахань'     : 'Astrakhan',
+    'Europe/Saratov':         isRu ? 'Саратов'       : 'Saratov',
+    'Europe/Ulyanovsk':       isRu ? 'Ульяновск'     : 'Ulyanovsk',
+    'Europe/Samara':          isRu ? 'Самара'        : 'Samara',
+    'Asia/Yekaterinburg':     isRu ? 'Екатеринбург'  : 'Yekaterinburg',
+    'Asia/Omsk':              isRu ? 'Омск'          : 'Omsk',
+    'Asia/Novosibirsk':       isRu ? 'Новосибирск'   : 'Novosibirsk',
+    'Asia/Barnaul':           isRu ? 'Барнаул'       : 'Barnaul',
+    'Asia/Tomsk':             isRu ? 'Томск'         : 'Tomsk',
+    'Asia/Novokuznetsk':      isRu ? 'Новокузнецк'   : 'Novokuznetsk',
+    'Asia/Krasnoyarsk':       isRu ? 'Красноярск'    : 'Krasnoyarsk',
+    'Asia/Irkutsk':           isRu ? 'Иркутск'       : 'Irkutsk',
+    'Asia/Chita':             isRu ? 'Чита'          : 'Chita',
+    'Asia/Yakutsk':           isRu ? 'Якутск'        : 'Yakutsk',
+    'Asia/Khandyga':          isRu ? 'Хандыга'       : 'Khandyga',
+    'Asia/Vladivostok':       isRu ? 'Владивосток'   : 'Vladivostok',
+    'Asia/Ust-Nera':          isRu ? 'Усть-Нера'     : 'Ust-Nera',
+    'Asia/Magadan':           isRu ? 'Магадан'       : 'Magadan',
+    'Asia/Sakhalin':          isRu ? 'Южно-Сахалинск': 'Yuzhno-Sakhalinsk',
+    'Asia/Srednekolymsk':     isRu ? 'Среднеколымск' : 'Srednekolymsk',
+    'Asia/Kamchatka':         isRu ? 'Камчатка'      : 'Kamchatka',
+    'Asia/Anadyr':            isRu ? 'Анадырь'       : 'Anadyr',
+    // СНГ и соседи
     'Europe/Kyiv':            isRu ? 'Киев'          : 'Kyiv',
     'Europe/Kiev':            isRu ? 'Киев'          : 'Kyiv',
     'Europe/Minsk':           isRu ? 'Минск'         : 'Minsk',
+    'Europe/Chisinau':        isRu ? 'Кишинёв'       : 'Chisinau',
+    'Europe/Riga':            isRu ? 'Рига'          : 'Riga',
+    'Europe/Vilnius':         isRu ? 'Вильнюс'       : 'Vilnius',
+    'Europe/Tallinn':         isRu ? 'Таллин'        : 'Tallinn',
+    'Asia/Almaty':            isRu ? 'Алматы'        : 'Almaty',
     'Europe/Almaty':          isRu ? 'Алматы'        : 'Almaty',
+    'Asia/Aqtobe':            isRu ? 'Актобе'        : 'Aqtobe',
+    'Asia/Atyrau':            isRu ? 'Атырау'        : 'Atyrau',
+    'Asia/Oral':              isRu ? 'Уральск'       : 'Oral',
+    'Asia/Qostanay':          isRu ? 'Костанай'      : 'Qostanay',
+    'Asia/Qyzylorda':         isRu ? 'Кызылорда'     : 'Qyzylorda',
+    'Asia/Bishkek':           isRu ? 'Бишкек'        : 'Bishkek',
     'Asia/Tashkent':          isRu ? 'Ташкент'       : 'Tashkent',
-    'Asia/Novosibirsk':       isRu ? 'Новосибирск'   : 'Novosibirsk',
-    'Asia/Yekaterinburg':     isRu ? 'Екатеринбург'  : 'Yekaterinburg',
-    'Asia/Vladivostok':       isRu ? 'Владивосток'   : 'Vladivostok',
+    'Asia/Samarkand':         isRu ? 'Самарканд'     : 'Samarkand',
+    'Asia/Dushanbe':          isRu ? 'Душанбе'       : 'Dushanbe',
+    'Asia/Ashgabat':          isRu ? 'Ашхабад'       : 'Ashgabat',
+    'Asia/Tbilisi':           isRu ? 'Тбилиси'       : 'Tbilisi',
+    'Asia/Baku':              isRu ? 'Баку'          : 'Baku',
+    'Asia/Yerevan':           isRu ? 'Ереван'        : 'Yerevan',
+    // Частые страны релокации / диаспоры
+    'Europe/Istanbul':        isRu ? 'Стамбул'       : 'Istanbul',
+    'Asia/Nicosia':           isRu ? 'Никосия'       : 'Nicosia',
+    'Europe/Nicosia':         isRu ? 'Никосия'       : 'Nicosia',
+    'Asia/Jerusalem':         isRu ? 'Тель-Авив'     : 'Tel Aviv',
+    'Asia/Bangkok':           isRu ? 'Бангкок'       : 'Bangkok',
+    'Asia/Ho_Chi_Minh':       isRu ? 'Хошимин'       : 'Ho Chi Minh City',
+    'Asia/Jakarta':           isRu ? 'Джакарта'      : 'Jakarta',
+    'Asia/Makassar':          isRu ? 'Бали'          : 'Bali',
+    'Europe/Belgrade':        isRu ? 'Белград'       : 'Belgrade',
+    'Europe/Prague':          isRu ? 'Прага'         : 'Prague',
+    'Europe/Budapest':        isRu ? 'Будапешт'      : 'Budapest',
+    'Europe/Madrid':          isRu ? 'Мадрид'        : 'Madrid',
+    'Europe/Lisbon':          isRu ? 'Лиссабон'      : 'Lisbon',
+    'Europe/Amsterdam':       isRu ? 'Амстердам'     : 'Amsterdam',
+    'Europe/Vienna':          isRu ? 'Вена'          : 'Vienna',
+    'Europe/Zurich':          isRu ? 'Цюрих'         : 'Zurich',
+    'Europe/Athens':          isRu ? 'Афины'         : 'Athens',
     'Europe/London':          isRu ? 'Лондон'        : 'London',
     'Europe/Paris':           isRu ? 'Париж'         : 'Paris',
     'Europe/Berlin':          isRu ? 'Берлин'        : 'Berlin',
@@ -60,10 +131,10 @@
     'Australia/Sydney':       isRu ? 'Сидней'        : 'Sydney',
     'Australia/Melbourne':    isRu ? 'Мельбурн'      : 'Melbourne',
     'Asia/Tokyo':             isRu ? 'Токио'         : 'Tokyo',
+    'Asia/Shanghai':          isRu ? 'Шанхай'        : 'Shanghai',
     'Asia/Dubai':             isRu ? 'Дубай'         : 'Dubai',
-    'Asia/Tbilisi':           isRu ? 'Тбилиси'       : 'Tbilisi',
-    'Asia/Baku':              isRu ? 'Баку'          : 'Baku',
-    'Asia/Yerevan':           isRu ? 'Ереван'        : 'Yerevan',
+    'America/Denver':         isRu ? 'Денвер'        : 'Denver',
+    'America/Vancouver':      isRu ? 'Ванкувер'      : 'Vancouver',
   };
 
   // ── Intl availability ─────────────────────────────────────────────────────
@@ -243,6 +314,9 @@
     var tzName  = el.getAttribute(ATTR_TZ) || 'UTC';
     var format  = el.getAttribute(ATTR_FORMAT) || 'datetime';
 
+    // "local" — час события задан в таймзоне посетителя (автовебинар «у всех 20:00 по местному»)
+    if (tzName === 'local') tzName = userTz;
+
     if (!dateStr) {
       console.warn('[gc-date-localizer] Missing data-gc-date on element', el);
       return;
@@ -273,6 +347,8 @@
       else if (format === 'date')     result = formatDate(utcDate);
       else if (format === 'relative') result = formatRelative(utcDate);
       else if (format === 'full')     result = formatFull(utcDate);
+      else if (format === 'city')     result = cityLabel();
+      else if (format === 'zone')     result = cityLabel() + (utcOffsetLabel(utcDate) ? ' (' + utcOffsetLabel(utcDate) + ')' : '');
       else                            result = formatDatetime(utcDate);
 
       el.textContent = result;
