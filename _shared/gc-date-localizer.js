@@ -1,5 +1,5 @@
 /**
- * gc-date-localizer — v1.3.0
+ * gc-date-localizer — v1.4.0
  * Localizes event dates on GetCourse landing pages.
  *
  * Usage (fixed date):
@@ -17,7 +17,7 @@
  *   <span data-gc-date="daily" data-gc-time="20:00" data-gc-tz="local" data-gc-format="zone"></span>
  *
  * data-gc-tz: IANA-зона источника | "local" (= таймзона посетителя). По умолчанию UTC.
- * Formats: datetime (default) | time | date | relative | full | city | zone
+ * Formats: datetime (default) | time | date | weekdate | relative | full | city | zone
  */
 (function () {
 
@@ -235,6 +235,17 @@
     return datePart + ', ' + timePart + ' — ' + cityLabel();
   }
 
+  // ── Format: weekdate — "Четверг, 22 августа" / "Thursday, August 22" ─────
+  function formatWeekdate(date) {
+    var s = new Intl.DateTimeFormat(locale, {
+      timeZone: userTz,
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    }).format(date);
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
   // ── Format: relative — "завтра в 06:00" / "tomorrow at 6:00 AM" ──────────
   function formatRelative(date) {
     var eventDay = localDateStr(date);
@@ -347,6 +358,7 @@
       else if (format === 'date')     result = formatDate(utcDate);
       else if (format === 'relative') result = formatRelative(utcDate);
       else if (format === 'full')     result = formatFull(utcDate);
+      else if (format === 'weekdate') result = formatWeekdate(utcDate);
       else if (format === 'city')     result = cityLabel();
       else if (format === 'zone')     result = cityLabel() + (utcOffsetLabel(utcDate) ? ' (' + utcOffsetLabel(utcDate) + ')' : '');
       else                            result = formatDatetime(utcDate);
