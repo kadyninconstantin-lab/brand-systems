@@ -106,7 +106,7 @@
   «Секреты планировки сада»: образец типографики и вёрстки плашки.
 - `~/projects/brand-systems/sosnovka/assets/screenshots/IMG_4566_2.png` — обложка лид-магнита
   «Каталог растений по цветам».
-- `~/projects/brand-systems/sosnovka/assets/cases/toksovo_{before,after}.jpg` — пара «до/после»
+- `~/projects/brand-systems/sosnovka/assets/cases/toksovo_before.jpg` / `toksovo_after_v2.jpg` — пара «до/после»
   одного объекта (для архетипа 5).
 
 ⚠️ Эти файлы — **не портрет спикера и не работы учениц**. Обложки лид-магнитов под эти роли
